@@ -1,0 +1,32 @@
+name: "Ground issue"
+description: "팀 운영 시 기능 추가, 수정, 삭제 등"
+title: "[Ground] "
+labels: ["Ground"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: 💡 이슈 설명
+      placeholder: "왜 이 이슈가 필요한가요?"
+    validations:
+      required: true
+
+  - type: input
+    id: deadline
+    attributes:
+      label: 📅 완료 예정일
+      placeholder: "YYYY-MM-DD"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: 🔥 우선순위
+      options:
+        - "A - 긴급"
+        - "B - 오늘"
+        - "C - 이번 주"
+        - "D - 언젠가"
+    validations:
+      required: true
