@@ -9,6 +9,7 @@ class CompanyFileType(str, Enum):
     IMAGE = "IMAGE"
 
 class DisclosureFileType(str, Enum):
+    ETC = "ETC"
     HTML = "HTML"
     PDF = "PDF"
     XBRL = "XBRL"

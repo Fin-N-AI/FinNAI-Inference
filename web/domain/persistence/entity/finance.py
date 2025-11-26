@@ -1,5 +1,5 @@
 from sqlalchemy import (
-    Column, Integer, String, DateTime, ForeignKey, Float
+    Column, Integer, String, DateTime, ForeignKey, Float, BigInteger
 )
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
@@ -20,7 +20,7 @@ class FinancialAccountEntity(Base):
     account_id = Column(String(255))
     account_nm = Column(String(255))
 
-    thstrm_amount = Column(Integer)  # Java Long -> Python Integer/BigInteger (SQLAlchemy handles automatically)
+    thstrm_amount = Column(BigInteger)  # Java Long -> Python Integer/BigInteger (SQLAlchemy handles automatically)
 
     created_at = Column(DateTime, default=func.now())
 
