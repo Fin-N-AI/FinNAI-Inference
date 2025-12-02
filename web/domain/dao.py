@@ -7,16 +7,17 @@ from sqlalchemy.orm import Session
 
 # 1. 설정 및 Entity 임포트 (경로는 프로젝트에 맞게 수정)
 from web.config.database import SessionLocal
+from web.domain.entity.company import CompanyEntity
+from web.domain.entity.disclosure import DisclosureListEntity
+from web.domain.entity.finance import FinancialAccountEntity
+from web.domain.entity.report import DartReportEntity
+from web.schemas.company import Company
+from web.schemas.disclosure import DisclosureList
+from web.schemas.finance import FinancialAccount
+from web.schemas.report import DartReport
+
+
 # (User가 제공한 Entity 클래스 이름에 맞춤)
-from web.domain.persistence.entity.company import CompanyEntity
-from web.domain.persistence.entity.disclosure import DisclosureListEntity
-from web.domain.persistence.entity.finance import FinancialAccountEntity
-# (Pydantic 모델은 args_schema용으로 별도로 존재한다고 가정)
-from web.domain.models.company import Company
-from web.domain.models.finance import FinancialAccount
-from web.domain.models.disclosure import DisclosureList, DisclosureFile
-from web.domain.models.report import DartReport
-from web.domain.persistence.entity.report import DartReportEntity
 
 
 def get_db():

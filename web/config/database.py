@@ -1,3 +1,4 @@
+import logging
 import os
 from dotenv import load_dotenv, find_dotenv
 from sqlalchemy import create_engine
@@ -60,9 +61,16 @@ async def get_db():
 # ----------------------------------------------------------------
 # 4. Sync (동기) 설정 - 스크립트 실행용
 # ----------------------------------------------------------------
+
+logging.basicConfig()
+logging.getLogger('sqlalchemy.engine').setLevel(logging.ERROR)
+logging.getLogger('sqlalchemy.dialects').setLevel(logging.ERROR)
+logging.getLogger('sqlalchemy.pool').setLevel(logging.ERROR)
+logging.getLogger('sqlalchemy.orm').setLevel(logging.ERROR)
+
 sync_engine = create_engine(
     SYNC_DATABASE_URL,
-    echo=True,
+    echo=False,
     pool_size=10,
     max_overflow=20
 )
