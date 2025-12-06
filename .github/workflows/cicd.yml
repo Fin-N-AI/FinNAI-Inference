@@ -1,0 +1,57 @@
+name: FinNAI CI/CD
+
+on:
+  push:
+    branches: [ prod ]
+
+jobs:
+  build:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/finnai-inference:latest
+
+  deploy:
+    name: Deploy to Server
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Navigate to the project directory
+            # If the directory does not exist, clone the repository
+            if [ ! -d "$HOME/FinNAI-Inference" ]; then
+              git clone https://github.com/${{ github.repository }}.git $HOME/FinNAI-Inference
+            fi
+            cd $HOME/FinNAI-Inference
+            
+            # Pull the latest changes from the production branch
+            git pull origin prod
+            
+            # Use Docker Compose to build and start services
+            # Assumes .env file is already present on the server in the project directory
+            docker-compose up -d --build --remove-orphans

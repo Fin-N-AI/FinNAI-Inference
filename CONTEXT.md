@@ -185,6 +185,9 @@ test:     테스트 관련
 ci:       CI/CD yaml 수정
 style:    코드 포맷, 주석, 공백 등
 chore:    기타 작업 (빌드, 패키지 등)
+ai: LLM, Agent, Embedding 등 AI 관련 기능
+exp: AI 관련 학습, 테스트, 추론등 실험한 기능 - 프로덕션 포함 X
+
 예시
 bash✅ 좋은 예시:
 feat: 사용자 로그인 API 연동

@@ -1,4 +1,5 @@
 from fastapi import APIRouter, BackgroundTasks
+
 from web.api.request.inference_request import DataSyncRequest
 from web.api.response.inference_response import DataSyncResponse
 

@@ -1,0 +1,30 @@
+{
+  "mcpServers": {
+    "context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-9caf8c7b-d032-4e4e-b6b0-331315c689ea"
+      ]
+    },
+    "filesystem": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "E:\\IntelliJProject\\p-plip-was"
+      ],
+      "description": "내 스프링 부트 프로젝트의 소스 코드(src/main)를 읽고 테스트 코드(src/test)를 작성하기 위한 필수 접근 권한"
+    },
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ],
+      "description": "복잡한 비즈니스 로직 테스트 시나리오(Given-When-Then)를 단계별로 설계하고 엣지 케이스를 놓치지 않게 도움"
+    }
+  }
+}

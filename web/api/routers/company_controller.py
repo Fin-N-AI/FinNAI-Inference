@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+
 from web.api.request.inference_request import CompanyRequest
 from web.api.response.inference_response import CompanyBriefingResponse, CompanyHighlightResponse
 

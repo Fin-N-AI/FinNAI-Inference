@@ -1,22 +1,19 @@
 import os
-import shutil
-import uuid
-from fastapi import APIRouter, UploadFile, File, HTTPException, Form
 
-from web.api.request.inference_request import CompanyRequest
-from web.api.response.inference_response import ReportResponse, CompanyBriefingResponse, CompanyHighlightResponse
+from fastapi import APIRouter, UploadFile, File, Form
+
+from web.api.response.inference_response import ReportResponse
+
 # from web.api.request.report_request import ReportMetadata (필요 시 사용)
 
 # LangChain 관련 임포트
-from langchain_community.document_loaders import PyPDFLoader
-from langchain.chains.summarize import load_summarize_chain
-from langchain_openai import ChatOpenAI
 
 router = APIRouter(tags=["Report Analysis"])
 
 # 임시 파일 저장 경로
 TEMP_DIR = "temp_files"
 os.makedirs(TEMP_DIR, exist_ok=True)
+
 
 @router.post("/analyze", response_model=ReportResponse, summary="PDF 보고서 분석")
 async def analyze_report(
