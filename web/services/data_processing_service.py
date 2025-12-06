@@ -1,4 +1,9 @@
 
+import os
+import re
+import time
+import random
+from datetime import datetime
 from typing import List, Dict, Tuple
 
 import pandas as pd
@@ -11,7 +16,6 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_upstage import ChatUpstage
 from sqlalchemy.orm import Session
-from fastapi.concurrency import run_in_threadpool
 
 import OpenDartReader
 from web.domain.entity.company import CompanyEntity
@@ -32,7 +36,7 @@ class DataProcessingService:
         self.text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=20000,
             chunk_overlap=1000,
-            separators=["\n\n", "\n", " ", ""],
+            separators=["\\n\\n", "\\n", " ", ""],
         )
         self._setup_prompts()
 
@@ -90,22 +94,22 @@ class DataProcessingService:
         self.overview_chain = self.overview_prompt | self.llm | self.output_parser
         self.description_chain = self.description_prompt | self.llm | self.output_parser
 
-    async def process_company_data(self, corp_code: str, start_date: str, end_date: str, year: int, reprt_code: str = "11011") -> Tuple[
+    def process_company_data(self, corp_code: str, start_date: str, end_date: str, year: int, reprt_code: str = "11011") -> Tuple[
         CompanyEntity,
         List[FinancialAccountEntity],
         List[FinancialIndexEntity],
         List[Tuple[DisclosureListEntity, DisclosureFileEntity, ParsedDisclosureFileEntity]]
     ]:
         # 1. Get Company Info
-        company_entity = await run_in_threadpool(self._get_company_info, corp_code)
+        company_entity = self._get_company_info(corp_code)
         print(f"회사 조회 완료 {company_entity.name}")
 
         # 2. Get Financial Info
-        fin_accounts, fin_indices = await run_in_threadpool(self._get_financial_info, corp_code, year, reprt_code)
-        print(f"재무 정보 조회 완료 {fin_accounts[0].account_nm}")
+        fin_accounts, fin_indices = self._get_financial_info(corp_code, year, reprt_code)
+        print(f"재무 정보 조회 완료 len : {len(fin_accounts)}")
         # 3. Get Disclosure Info
-        disclosure_data = await run_in_threadpool(self._get_disclosure_info, corp_code, start_date, end_date)
-        print(f"공시 정보 조회 완료{disclosure_data}")
+        disclosure_data = self._get_disclosure_info(corp_code, start_date, end_date)
+        print(f"공시 정보 조회 완료 len : {len(disclosure_data)}")
         # 4. Summarize (LLM)
         overview_text = ""
         business_text = ""
@@ -120,9 +124,9 @@ class DataProcessingService:
                 longest_business = parsed_file.business_contents
         
         if longest_overview:
-            overview_text = await run_in_threadpool(self._run_smart_summary, longest_overview, self.overview_chain)
+            overview_text = self._run_smart_summary(longest_overview, self.overview_chain)
         if longest_business:
-            business_text = await run_in_threadpool(self._run_smart_summary, longest_business, self.description_chain)
+            business_text = self._run_smart_summary(longest_business, self.description_chain)
         company_entity.overview = overview_text
         company_entity.description = business_text
         print("문서 요약 완료")
@@ -200,8 +204,8 @@ class DataProcessingService:
         
         return indices
 
-    async def _get_disclosure_info(self, corp_code: str, start_date: str, end_date: str) -> List[Tuple[DisclosureListEntity, DisclosureFileEntity, ParsedDisclosureFileEntity]]:
-        df = await run_in_threadpool(self.dart.list, corp_code, start=start_date, end=end_date, kind='A')
+    def _get_disclosure_info(self, corp_code: str, start_date: str, end_date: str) -> List[Tuple[DisclosureListEntity, DisclosureFileEntity, ParsedDisclosureFileEntity]]:
+        df = self.dart.list(corp_code, start=start_date, end=end_date, kind='A')
         if df is None or df.empty:
             return []
 
@@ -218,7 +222,7 @@ class DataProcessingService:
             )
 
             # DisclosureFile
-            raw_text = await run_in_threadpool(self.dart.document, rcept_no)
+            raw_text = self.dart.document(rcept_no)
             file_type = self._detect_file_type(raw_text)
             disclosure_file = DisclosureFileEntity(
                 file_type=file_type,
@@ -227,7 +231,7 @@ class DataProcessingService:
             )
 
             # ParsedDisclosureFile
-            parsed_content = await self._parse_disclosure_document(rcept_no)
+            parsed_content = self._parse_disclosure_document(rcept_no)
             parsed_file = ParsedDisclosureFileEntity(**parsed_content)
             
             disclosure_data.append((disclosure_list, disclosure_file, parsed_file))
@@ -242,8 +246,8 @@ class DataProcessingService:
             return DisclosureFileType.HTML
         return DisclosureFileType.ETC
 
-    async def _parse_disclosure_document(self, rcept_no: str) -> Dict[str, str]:
-        sub_docs = await run_in_threadpool(self.dart.sub_docs, rcept_no)
+    def _parse_disclosure_document(self, rcept_no: str) -> Dict[str, str]:
+        sub_docs = self.dart.sub_docs(rcept_no)
         parsed_data = {
             "company_overview": None,
             "business_contents": None,
@@ -269,10 +273,10 @@ class DataProcessingService:
                 try:
                     target_url = target_doc['url'].values[0]
                     headers = {'User-Agent': self.ua.random, 'Referer': 'https://dart.fss.or.kr/'}
-                    response = await run_in_threadpool(requests.get, target_url, headers=headers)
-                    await run_in_threadpool(time.sleep, random.uniform(0.1, 0.3))
-                    soup = await run_in_threadpool(BeautifulSoup, response.content, 'html.parser')
-                    raw_text = await run_in_threadpool(lambda s: s.get_text(separator='\n').replace('\xa0', ' '), soup)
+                    response = requests.get(target_url, headers=headers)
+                    time.sleep(random.uniform(0.1, 0.3))
+                    soup = BeautifulSoup(response.content, 'html.parser')
+                    raw_text = soup.get_text(separator='\n').replace('\xa0', ' ')
                     clean_text = re.sub(r'\n+', '\n', raw_text).strip()
                     parsed_data[key] = clean_text
                 except Exception as e:
@@ -280,35 +284,35 @@ class DataProcessingService:
                     parsed_data[key] = None
         return parsed_data
 
-    async def _run_smart_summary(self, text_content: str, final_chain) -> str:
+    def _run_smart_summary(self, text_content: str, final_chain) -> str:
         print("문서 요약 시작")
         if not text_content or pd.isna(text_content):
             return ""
 
-        async def invoke_with_retry_async(chain, input_data, max_retries=3):
+        def invoke_with_retry(chain, input_data, max_retries=3):
             for attempt in range(max_retries):
                 try:
-                    return await chain.ainvoke(input_data)
+                    return chain.invoke(input_data)
                 except Exception as e:
                     if "429" in str(e) or "rate limit" in str(e).lower():
                         wait_time = (2 ** attempt) + random.uniform(0, 1)
-                        await run_in_threadpool(time.sleep, wait_time)
+                        time.sleep(wait_time)
                         print("요약 중 오류 발생")
                     else:
                         raise e
             raise Exception("API call failed after max retries.")
 
         if len(text_content) < self.text_splitter._chunk_size:
-            return await invoke_with_retry_async(final_chain, {"text": text_content})
+            return invoke_with_retry(final_chain, {"text": text_content})
 
-        docs = await run_in_threadpool(self.text_splitter.create_documents, [text_content])
+        docs = self.text_splitter.create_documents([text_content])
         split_texts = [doc.page_content for doc in docs]
         
         chunk_summaries = []
         for text_piece in split_texts:
-            res = await invoke_with_retry_async(self.map_chain, {"text": text_piece})
+            res = invoke_with_retry(self.map_chain, {"text": text_piece})
             chunk_summaries.append(res)
-            await run_in_threadpool(time.sleep, 1) # Throttling
+            time.sleep(1) # Throttling
 
         combined_summary = "\n\n".join(chunk_summaries)
-        return await invoke_with_retry_async(final_chain, {"text": combined_summary})
+        return invoke_with_retry(final_chain, {"text": combined_summary})

@@ -1,8 +1,7 @@
 from datetime import datetime
-from http import HTTPStatus
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from web.config.database import get_db
 from web.domain.dao.data_processing_dao import DataProcessingDAO
@@ -17,7 +16,7 @@ async def process_company_data(
         start_date: str = None,
         end_date: str = None,
         year: int = None,
-        db: Session = Depends(get_db)
+        db: AsyncSession = Depends(get_db)
 ):
     """
     지정된 기업 코드에 대한 전체 데이터 처리 파이프라인을 실행합니다.
@@ -32,18 +31,10 @@ async def process_company_data(
 
     service = DataProcessingService()
     dao = DataProcessingDAO()
-
-    # TODO: 여기 stockcode로 조회해서 중복되면 바로 응답
-    # 이미 처리된 회사인지 확인
-    existing_company = await dao.get_company_by_corp_code(db, corp_code)
-    if existing_company:
-        raise HTTPException(
-            status_code=int(HTTPStatus.OK),
-            detail=f"Company with corp_code {corp_code} already processed."
-        )
+    #ToDo: 여기 stockcode로 조회해서 중복되면 바로 응답
     try:
         # 서비스 호출하여 모든 데이터 객체 생성
-        company, fin_accounts, fin_indices, disclosure_data = await service.process_company_data(
+        company, fin_accounts, fin_indices, disclosure_data = service.process_company_data(
             corp_code=corp_code,
             start_date=start_date,
             end_date=end_date,
@@ -68,4 +59,3 @@ async def process_company_data(
         print(f"Error processing {corp_code}: {e}")
 
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
-

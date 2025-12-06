@@ -1,6 +1,6 @@
 from sqlalchemy import (
     Column, Integer, String, DateTime, Text,
-    ForeignKey, UniqueConstraint, Enum as SAEnum
+    ForeignKey, UniqueConstraint, Enum as SAEnum, Enum
 )
 from sqlalchemy.orm import relationship, declarative_base
 from sqlalchemy.sql import func
@@ -41,10 +41,11 @@ class DisclosureFileEntity(Base):
 
     disclosure_id = Column(Integer, ForeignKey('disclosure_list.id'), nullable=False)
 
-    file_type = Column(SAEnum(DisclosureFileType))
+    file_type = Column(Enum(DisclosureFileType, native_enum=False), nullable=False)
     file_url = Column(String(255))
-    raw_content = Column(Text)
+    #raw_content = Column(Text)
 
     created_at = Column(DateTime, default=func.now())
 
     disclosure = relationship("DisclosureListEntity", backref="files")
+    parsed_file = relationship("ParsedDisclosureFileEntity", back_populates="disclosure_file")

@@ -1,5 +1,7 @@
 from fastapi import APIRouter
-zz
+
+from web.api.request.inference_request import MarketNewsRequest, MarketSectorRequest
+
 router = APIRouter(tags=["Market Intelligence"])
 
 
