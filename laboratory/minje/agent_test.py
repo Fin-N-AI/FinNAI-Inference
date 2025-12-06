@@ -67,7 +67,7 @@ async def run_dart_agent():
 
     agent_executor = create_react_agent(llm, tools, prompt=prompt)
 
-    question = "삼성전자의 2024년 3분기 보고서에서 현금흐름표를 요약해줘."
+    question = "틸론의 주요 사업보고서를 요약해서 사업의 개요와 연혁 등을 종합해서 알려주고, 사업보고서 코드를 "
 
     print(f"\n[질문]: {question}\n")
 

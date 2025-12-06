@@ -1,5 +1,5 @@
 # Python 기본 이미지 사용
-FROM python:3.11
+FROM python:3.11-slim
 
 WORKDIR /app
 
