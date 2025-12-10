@@ -42,16 +42,4 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT }}
           script: |
-            # Navigate to the project directory
-            # If the directory does not exist, clone the repository
-            if [ ! -d "$HOME/FinNAI-Inference" ]; then
-              git clone https://github.com/${{ github.repository }}.git $HOME/FinNAI-Inference
-            fi
-            cd $HOME/FinNAI-Inference
-            
-            # Pull the latest changes from the production branch
-            git pull origin prod
-            
-            # Use Docker Compose to build and start services
-            # Assumes .env file is already present on the server in the project directory
-            docker-compose up -d --build --remove-orphans
+            docker compose up -d --build --remove-orphans
